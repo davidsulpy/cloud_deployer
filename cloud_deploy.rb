@@ -38,16 +38,15 @@ module CloudDeploy
  
 	class AWSDeployer
 		require 'aws-sdk'
-		require 'curses'
  
-		def initialize(template_location, app_name, app_version, app_env, cfn_prefix, cfn_vars, access_key_id, secret_access_key)
+		def initialize(template_location, app_name, app_version, app_env, cfn_prefix, cfn_vars, access_key_id, secret_access_key, use_curses = false)
 			@template_location = template_location
 			@app_name = app_name
 			@app_version = app_version
 			@cfn_prefix = cfn_prefix
 			@app_env = app_env
 			@cfn_vars = cfn_vars
- 
+ 			@use_curses = use_curses
 			if (access_key_id == nil || access_key_id == '')
 				raise "access_key_id cannot be empty or nil"
 			end
@@ -127,8 +126,12 @@ module CloudDeploy
 				:disable_rollback => true,
 				:parameters => @cfn_vars[@app_name][@app_env]
 				)
-				
-			check_stack_status(current_stack_name)
+			
+			if (@use_curses)
+				check_stack_status_curses(current_stack_name)
+			else
+				check_stack_status(current_stack_name)
+			end
  
 			@stack_outputs = {}
 			stack.outputs.each do |output|
@@ -144,13 +147,82 @@ module CloudDeploy
 			puts "#{stack_name} has current status #{stack.status}"
 			stack.delete
 			puts "AWS has been informed to delete #{stack_name} #{stack.status}."
-			check_stack_status(stack_name, {
-				:force_delete => true
-				})
+
+			if (@use_curses)
+				check_stack_status_curses(stack_name, {
+					:force_delete => true
+					})
+			else
+				check_stack_status(stack_name, {
+					:force_delete => true
+					})
+			end
 			puts "Delete has finished!"
 		end
- 
+
 		def check_stack_status(stack_name, options = {})
+			status_title_message = "Monitoring AWS Stack Events for #{stack_name}"
+			cloudformation = AWS::CloudFormation.new
+			stack = cloudformation.stacks[stack_name]
+ 
+			if (stack.status == "CREATE_COMPLETE")
+				puts " # Create Complete!"
+			else
+				finished = false
+				while (!finished)
+					if (stack == nil || !stack.exists? || stack.status == "DELETE_COMPLETE")
+						puts "success! stack deleted."
+						finished = true
+						break
+					end
+					if (stack.status == "CREATE_COMPLETE")
+						puts "success! stack created!"
+						finished = true
+						break
+					elsif (stack.status == "CREATE_FAILED")
+						puts "failed to create #{@app_name} stack. #{stack.status_reason}"
+						finished = true
+						break
+					elsif (stack.status == "DELETE_FAILED")
+						if (options[:force_delete])
+							puts " # Delete failed, attempting delete again"
+							stack.delete
+						else
+							puts "failed to delete #{stack_name} stack. #{stack.status_reason}"
+							finished = true
+							break
+						end
+					end
+					index = 2
+					stack.events.each do |event|
+						event_message = "[#{event.timestamp}] #{event.logical_resource_id}: #{event.resource_status} #{event.resource_status_reason}"
+						if (event_message.include? "CREATE_COMPLETE")
+							
+						end
+						index += 1
+					end
+					wait_sec = 15 # this is an interval to wait before checking the cloudformation stack status again
+					while (wait_sec > 0)
+						sleep 1
+						wait_sec -= 1
+					end
+				end
+			end
+ 
+			stack.events.each do |event|
+				puts "#{event.timestamp},#{event.logical_resource_id}:,#{event.resource_status},#{event.resource_status_reason}"
+			end
+			puts "Status summary: #{stack.status} #{stack.status_reason}"
+		end
+ 
+		def check_stack_status_curses(stack_name, options = {})
+			begin
+				require 'curses'
+			rescue Exception
+				puts "Curses dependency doesn't exist, using non curses version..."
+				return check_stack_status(stack_name, options)
+			end
+			
 			Curses.init_screen
 			Curses.start_color
 			status_title_message = "Monitoring AWS Stack Events for #{stack_name}"
