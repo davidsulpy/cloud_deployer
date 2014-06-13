@@ -135,7 +135,7 @@ module CloudDeploy
 			stack.outputs.each do |output|
 				@stack_outputs[output.key] = output.value
 			end
-			
+
 		end
  
 		def deploy_cloudformation_template()
@@ -208,8 +208,16 @@ module CloudDeploy
 						puts "success! stack created!"
 						finished = true
 						break
+					elsif (stack.status == "UPDATE_COMPLETE")
+						puts "success! stack has been updated!"
+						finished = true
+						break
 					elsif (stack.status == "CREATE_FAILED")
 						puts "failed to create #{@app_name} stack. #{stack.status_reason}"
+						finished = true
+						break
+					elsif (stack.status == "UPDATE_FAILED")
+						puts "failed to update #{@app_name} stack. #{stack.status_reason}"
 						finished = true
 						break
 					elsif (stack.status == "DELETE_FAILED")
@@ -279,9 +287,19 @@ module CloudDeploy
 						puts "success! stack created!"
 						finished = true
 						break
+					elsif (stack.status == "UPDATE_COMPLETE")
+						Curses.close_screen
+						puts "success! stack has been updated!"
+						finished = true
+						break
 					elsif (stack.status == "CREATE_FAILED")
 						Curses.close_screen
 						puts "failed to create #{@app_name} stack. #{stack.status_reason}"
+						finished = true
+						break
+					elsif (stack.status == "UPDATE_FAILED")
+						Curses.close_screen
+						puts "failed to update #{@app_name} stack. #{stack.status_reason}"
 						finished = true
 						break
 					elsif (stack.status == "DELETE_FAILED")
