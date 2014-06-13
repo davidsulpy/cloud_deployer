@@ -103,6 +103,29 @@ module CloudDeploy
 			puts "stack doesn't exist"
 			return false
 		end
+
+		def update_cloudformation_template()
+			puts "Updateing CloudFormation stack using template #{@template_location}"
+			app_template = File.read(@template_location, :encoding => 'UTF-8')
+
+			cloudformation = AWS::CloudFormation.new
+			app_stackname = current_stack_name
+
+			puts "updating #{app_stackname}"
+
+			validate_template(cloudformation, app_template)
+
+			puts " # updating stack"
+			stack = cloudformation.stacks[app_stackname]
+
+			if (stack != nil)
+				stack.update({
+					:template => app_template,
+					:parameters => @cfn_vars
+					})
+			end
+
+		end
  
 		def deploy_cloudformation_template()
 			puts "Getting CloudFormation template at #{@template_location}"
