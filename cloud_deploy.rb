@@ -46,14 +46,14 @@ module CloudDeploy
 			@cfn_vars = options[:cfn_vars]
 			@use_curses = options[:use_curses]
  
-			if (access_key_id == nil || access_key_id == '')
+			if (options[:access_key_id] == nil || options[:access_key_id] == '')
 				raise "access_key_id cannot be empty or nil"
 			end
-			if (secret_access_key == nil || secret_access_key == '')
+			if (options[:secret_access_key] == nil || options[:secret_access_key] == '')
 				raise "secret_access_key cannot be empty or nil"
 			end
-			@access_key_id = access_key_id
-			@secret_access_key = secret_access_key
+			@access_key_id = options[:access_key_id]
+			@secret_access_key = options[:secret_access_key]
  
 			configure_aws()
 		end
