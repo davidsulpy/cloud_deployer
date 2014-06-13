@@ -39,14 +39,11 @@ module CloudDeploy
 	class AWSDeployer
 		require 'aws-sdk'
 		require 'curses'
- 
-		def initialize(template_location, app_name, app_version, app_env, cfn_prefix, cfn_vars, access_key_id, secret_access_key)
-			@template_location = template_location
-			@app_name = app_name
-			@app_version = app_version
-			@cfn_prefix = cfn_prefix
-			@app_env = app_env
-			@cfn_vars = cfn_vars
+
+		def initialize(options = {})
+			@template_location = options[:template_location]
+			@stack_name = options[:stack_name]
+			@cfn_vars = options[:cfn_vars]
  
 			if (access_key_id == nil || access_key_id == '')
 				raise "access_key_id cannot be empty or nil"
@@ -253,8 +250,8 @@ module CloudDeploy
 			end
 		end
  
-		def delete_old_stacks()
-			puts "DELETING OLD STACKS FOR #{@app_env} APP #{@app_name}"
+		def delete_old_stacks(app_env, app_name)
+			puts "DELETING OLD STACKS FOR #{app_env} APP #{app_name}"
 			
 			current_app_stackname = current_stack_name
 			
@@ -264,7 +261,7 @@ module CloudDeploy
 				puts " # checking #{stack.name}"
 				if (stack.name == current_app_stackname)
 					puts " # # leaving #{stack.name}. (This is the current stack)"
-				elsif (stack.name.include? "#{@app_env}") && (stack.name.include? "#{@app_name}")
+				elsif (stack.name.include? "#{app_env}") && (stack.name.include? "#{app_name}")
 					puts " # # DELETING stack: #{stack.name}"
 					stack.delete
 					puts " # # Delete sent!"
@@ -277,7 +274,7 @@ module CloudDeploy
 		private
  
 		def current_stack_name
-			return "#{@cfn_prefix}-#{@app_env}-#{@app_version}-#{@app_name}".gsub(".", "-")
+			return "#{@stack_name}".gsub(".", "-")
 		end
 	end
  
