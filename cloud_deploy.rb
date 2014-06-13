@@ -44,6 +44,7 @@ module CloudDeploy
 			@template_location = options[:template_location]
 			@stack_name = options[:stack_name]
 			@cfn_vars = options[:cfn_vars]
+			@use_curses = options[:use_curses]
  
 			if (access_key_id == nil || access_key_id == '')
 				raise "access_key_id cannot be empty or nil"
@@ -96,9 +97,10 @@ module CloudDeploy
 			cloudformation = AWS::CloudFormation.new
 			if (cloudformation.stacks[stack_name].exists?)
 				puts "stack exists"
-				return
+				return true
 			end
 			puts "stack doesn't exist"
+			return false
 		end
  
 		def deploy_cloudformation_template()
@@ -111,12 +113,6 @@ module CloudDeploy
 			puts "deploying #{app_stackname}"
 			
 			validate_template(cloudformation, app_template)
-			
-			if (cloudformation.stacks[app_stackname].exists?)
-				@cfn_prefix += "-1"
-				app_stackname = current_stack_name
-				puts "incremented stack because same name already exists, now deploying: #{app_stackname}"
-			end
  
 			puts " # creating stack"
 			stack = cloudformation.stacks.create(app_stackname, app_template,
