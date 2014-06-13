@@ -125,6 +125,17 @@ module CloudDeploy
 					})
 			end
 
+			if (@use_curses)
+				check_stack_status_curses(current_stack_name)
+			else
+				check_stack_status(current_stack_name)
+			end
+ 
+			@stack_outputs = {}
+			stack.outputs.each do |output|
+				@stack_outputs[output.key] = output.value
+			end
+			
 		end
  
 		def deploy_cloudformation_template()
