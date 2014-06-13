@@ -122,7 +122,7 @@ module CloudDeploy
 			stack = cloudformation.stacks.create(app_stackname, app_template,
 				:capabilities => ['CAPABILITY_IAM'],
 				:disable_rollback => true,
-				:parameters => @cfn_vars[@app_name][@app_env]
+				:parameters => @cfn_vars
 				)
 			
 			if (@use_curses)
