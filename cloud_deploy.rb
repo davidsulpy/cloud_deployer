@@ -45,6 +45,7 @@ module CloudDeploy
 			@stack_name = options[:stack_name]
 			@cfn_vars = options[:cfn_vars]
 			@use_curses = options[:use_curses]
+			@disable_rollback = options[:disable_rollback] || true
  
 			if (options[:access_key_id] == nil || options[:access_key_id] == '')
 				raise "access_key_id cannot be empty or nil"
@@ -117,7 +118,7 @@ module CloudDeploy
 			puts " # creating stack"
 			stack = cloudformation.stacks.create(app_stackname, app_template,
 				:capabilities => ['CAPABILITY_IAM'],
-				:disable_rollback => true,
+				:disable_rollback => @disable_rollback,
 				:parameters => @cfn_vars
 				)
 			
