@@ -38,7 +38,6 @@ module CloudDeploy
  
 	class AWSDeployer
 		require 'aws-sdk'
-		require 'curses'
 
 		def initialize(options = {})
 			@template_location = options[:template_location]
