@@ -95,8 +95,10 @@ module CloudDeploy
  
 		def check_if_exists(stack_name)
 			cloudformation = AWS::CloudFormation.new
-			if (cloudformation.stacks[stack_name].exists?)
-				puts "stack exists"
+
+			stack = cloudformation.stacks[stack_name]
+			if (stack.exists?)
+				puts "stack exists with status #{stack.status}"
 				return true
 			end
 			puts "stack doesn't exist"
@@ -104,7 +106,7 @@ module CloudDeploy
 		end
 
 		def update_cloudformation_template()
-			puts "Updateing CloudFormation stack using template #{@template_location}"
+			puts "Updating CloudFormation stack using template #{@template_location}"
 			app_template = File.read(@template_location, :encoding => 'UTF-8')
 
 			if (check_if_exists(current_stack_name) && cloudformation.stacks[current_stack_name].status == "CREATE_FAILED")
