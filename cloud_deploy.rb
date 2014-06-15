@@ -115,7 +115,9 @@ module CloudDeploy
 			if (check_if_exists(current_stack_name) && cloudformation.stacks[current_stack_name].status == "CREATE_FAILED")
 				puts "The stack #{current_stack_name} exists but has a CREATE_FAILED state, deleting it..."
 				delete_stack(current_stack_name)
+				return deploy_cloudformation_template()
 			end
+			
 			puts "updating #{app_stackname}"
 
 			validate_template(cloudformation, app_template)
