@@ -109,14 +109,13 @@ module CloudDeploy
 			puts "Updating CloudFormation stack using template #{@template_location}"
 			app_template = File.read(@template_location, :encoding => 'UTF-8')
 
+			cloudformation = AWS::CloudFormation.new
+			app_stackname = current_stack_name
+			
 			if (check_if_exists(current_stack_name) && cloudformation.stacks[current_stack_name].status == "CREATE_FAILED")
 				puts "The stack #{current_stack_name} exists but has a CREATE_FAILED state, deleting it..."
 				delete_stack(current_stack_name)
 			end
-
-			cloudformation = AWS::CloudFormation.new
-			app_stackname = current_stack_name
-
 			puts "updating #{app_stackname}"
 
 			validate_template(cloudformation, app_template)
