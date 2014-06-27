@@ -61,6 +61,7 @@ module CloudDeploy
 			end
 
 			if (record.alias_target[:dns_name].include? new_alias)
+				puts "The target record already has this new alias, so no change is needed."
 				return
 			end
 
