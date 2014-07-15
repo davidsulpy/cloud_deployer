@@ -193,6 +193,10 @@ module CloudDeploy
 						puts "failed to update #{@app_name} stack. #{stack.status_reason}"
 						finished = true
 						break
+					elsif (stack.status == "UPDATE_ROLLBACK_COMPLETE")
+						puts "failed to update #{@app_name} stack. #{stack.status_reason}"
+						finished = true
+						break
 					elsif (stack.status == "DELETE_FAILED")
 						if (options[:force_delete])
 							puts " # Delete failed, attempting delete again"
@@ -271,6 +275,11 @@ module CloudDeploy
 						finished = true
 						break
 					elsif (stack.status == "UPDATE_FAILED")
+						Curses.close_screen
+						puts "failed to update #{@app_name} stack. #{stack.status_reason}"
+						finished = true
+						break
+					elsif (stack.status == "UPDATE_ROLLBACK_COMPLETE")
 						Curses.close_screen
 						puts "failed to update #{@app_name} stack. #{stack.status_reason}"
 						finished = true
