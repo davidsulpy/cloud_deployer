@@ -105,6 +105,7 @@ module CloudDeploy
  			
 			if (!success)
 				raise "Updating the cloudformations tack failed, check logs for details"
+			end
 
 			@stack_outputs = {}
 			stack.outputs.each do |output|
@@ -140,6 +141,7 @@ module CloudDeploy
  			
  			if (!success)
  				raise "Deploying the cloudformation stack failed, check logs for details"
+ 			end
 
 			@stack_outputs = {}
 			stack.outputs.each do |output|
