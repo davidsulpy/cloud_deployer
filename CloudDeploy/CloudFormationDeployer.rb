@@ -96,12 +96,16 @@ module CloudDeploy
 					})
 			end
 
+			success = false
 			if (@use_curses)
-				check_stack_status_curses(current_stack_name)
+				success = check_stack_status_curses(current_stack_name)
 			else
-				check_stack_status(current_stack_name)
+				success = check_stack_status(current_stack_name)
 			end
- 
+ 			
+			if (!success)
+				raise "Updating the cloudformations tack failed, check logs for details"
+
 			@stack_outputs = {}
 			stack.outputs.each do |output|
 				@stack_outputs[output.key] = output.value
@@ -127,12 +131,16 @@ module CloudDeploy
 				:parameters => @cfn_vars
 				)
 			
+			success = true
 			if (@use_curses)
-				check_stack_status_curses(current_stack_name)
+				success = check_stack_status_curses(current_stack_name)
 			else
-				check_stack_status(current_stack_name)
+				success = check_stack_status(current_stack_name)
 			end
- 
+ 			
+ 			if (!success)
+ 				raise "Deploying the cloudformation stack failed, check logs for details"
+
 			@stack_outputs = {}
 			stack.outputs.each do |output|
 				@stack_outputs[output.key] = output.value
@@ -166,7 +174,8 @@ module CloudDeploy
 			status_title_message = "Monitoring AWS Stack Events for #{stack_name}"
 			cloudformation = AWS::CloudFormation.new
 			stack = cloudformation.stacks[stack_name]
- 
+ 			
+ 			success = true
 			if (stack.status == "CREATE_COMPLETE")
 				puts " # Create Complete!"
 			else
@@ -188,14 +197,17 @@ module CloudDeploy
 					elsif (stack.status == "CREATE_FAILED")
 						puts "failed to create #{@app_name} stack. #{stack.status_reason}"
 						finished = true
+						success = false
 						break
 					elsif (stack.status == "UPDATE_FAILED")
 						puts "failed to update #{@app_name} stack. #{stack.status_reason}"
 						finished = true
+						success = false
 						break
 					elsif (stack.status == "UPDATE_ROLLBACK_COMPLETE")
 						puts "failed to update #{@app_name} stack. #{stack.status_reason}"
 						finished = true
+						success = false
 						break
 					elsif (stack.status == "DELETE_FAILED")
 						if (options[:force_delete])
@@ -204,6 +216,7 @@ module CloudDeploy
 						else
 							puts "failed to delete #{stack_name} stack. #{stack.status_reason}"
 							finished = true
+							success = false
 							break
 						end
 					end
@@ -227,6 +240,7 @@ module CloudDeploy
 				puts "#{event.timestamp},#{event.logical_resource_id}:,#{event.resource_status},#{event.resource_status_reason}"
 			end
 			puts "Status summary: #{stack.status} #{stack.status_reason}"
+			return success
 		end
  
 		def check_stack_status_curses(stack_name, options = {})
