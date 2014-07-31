@@ -1,3 +1,8 @@
+##########################################
+# Author: David Sulpy (david@sulpy.com)  #
+# License: MIT                           #
+##########################################
+
 module CloudDeploy
 
 	class Route53

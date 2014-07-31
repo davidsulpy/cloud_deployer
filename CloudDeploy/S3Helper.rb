@@ -1,3 +1,8 @@
+##########################################
+# Author: David Sulpy (david@sulpy.com)  #
+# License: MIT                           #
+##########################################
+
 module CloudDeploy
 
 	class S3Helper
@@ -16,7 +21,7 @@ module CloudDeploy
 				})
 		end
  
-		def put_asset_in_s3(asset_location, bucket, s3_path = "")
+		def put_asset_in_s3(asset_location, bucket, s3_path = "", content_type = "application/zip")
 			puts "Copying asset #{asset_location} to S3 bucket #{bucket}"
 			s3 = AWS::S3.new
 			bucket = s3.buckets[bucket]
@@ -30,7 +35,7 @@ module CloudDeploy
  
 				#Uploading with a temp name and renaming to get around some weird bug.
 		 		obj = bucket.objects["_#{remote_name}"]		
-		 		obj.write(:data => File.open(file_name), :content_length => File.size(file_name), :content_type =>  'application/zip', :multipart_threshold => 100 * 1024 * 1024)
+		 		obj.write(:data => File.open(file_name), :content_length => File.size(file_name), :content_type =>  content_type, :multipart_threshold => 100 * 1024 * 1024)
 		 		obj.move_to(remote_name)
 			end
 			puts "Finished pushing assets to S3!"

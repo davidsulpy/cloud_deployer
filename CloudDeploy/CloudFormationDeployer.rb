@@ -1,3 +1,8 @@
+##########################################
+# Author: David Sulpy (david@sulpy.com)  #
+# License: MIT                           #
+##########################################
+
 module CloudDeploy
 
 	class AWSDeployer
@@ -30,6 +35,7 @@ module CloudDeploy
 		end
  
 		def put_asset_in_s3(asset_location, bucket)
+			warn "[DEPRECATED] please use CloudDeploy::S3Helper instead..."
 			puts "Copying asset #{asset_location} to S3 bucket #{bucket}"
 			s3 = AWS::S3.new
 			bucket = s3.buckets[bucket]
