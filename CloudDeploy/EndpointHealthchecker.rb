@@ -6,13 +6,13 @@
 
 require 'net/http'
 
-module HealthChecker
-	class HttpCheck
+module CloudDeploy
+	class HttpHealthCheck
 		def initialize(options = {
 				health_attempts: 25,
-				notify_teamcity: false,
+				notify_teamcity: true,
 				sleep: "linear",
-				debug: false,
+				debug: true,
 			})
 			@sleep_calc = options[:sleep]
 			@use_teamcity = options[:notify_teamcity]
