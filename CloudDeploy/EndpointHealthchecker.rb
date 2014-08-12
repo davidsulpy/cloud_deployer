@@ -33,9 +33,6 @@ module CloudDeploy
 				if @debug; puts "    DEBUG: checking #{url}" end
 
 				begin
-					if url[-1..1] != "/"
-						url = "#{url}/"
-					end
 					url = URI.parse(url)
 					res = Net::HTTP.get_response(url)
 					if (res.code == "200")
