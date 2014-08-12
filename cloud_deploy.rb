@@ -7,6 +7,7 @@ require_relative './CloudDeploy/ElasticBeanstalkDeployer'
 require_relative './CloudDeploy/Route53'
 require_relative './CloudDeploy/S3Helper'
 require_relative './CloudDeploy/CloudFormationDeployer'
+require_relative './CloudDeploy/EndpointHealthchecker'
 
 module CloudDeploy
 end
