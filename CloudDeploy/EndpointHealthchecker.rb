@@ -49,7 +49,7 @@ module CloudDeploy
 				puts "  still checking #{url} health (#{health_attempts} more attempts left, sleeping #{sleep_time} seconds)"
 				sleep sleep_time
 
-				if @sleep_calc == "linear" sleep_time = sleep_time * 2 end
+				if @sleep_calc == "linear"; sleep_time = sleep_time * 2 end
 
 				if sleep_time > 120; sleep_time = 120 end 
 				health_attempts = health_attempts - 1
