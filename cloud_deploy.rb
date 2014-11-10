@@ -8,6 +8,7 @@ require_relative './CloudDeploy/Route53'
 require_relative './CloudDeploy/S3Helper'
 require_relative './CloudDeploy/CloudFormationDeployer'
 require_relative './CloudDeploy/EndpointHealthchecker'
+require_relative './CloudDeploy/CloudFrontHelper'
 
 module CloudDeploy
 end
