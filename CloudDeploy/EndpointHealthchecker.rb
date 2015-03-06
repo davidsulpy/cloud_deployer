@@ -12,15 +12,17 @@ module CloudDeploy
 				health_attempts: 25,
 				notify_teamcity: true,
 				sleep: "linear",
+				version_header: nil,
 				debug: true,
 			})
 			@sleep_calc = options[:sleep]
 			@use_teamcity = options[:notify_teamcity]
 			@health_attempts = options[:health_attempts]
 			@debug = options[:debug]
+			@version_header = options[:version_header]
 		end
 
-		def check_health(full_endpoint)
+		def check_health(full_endpoint, new_version = nil)
 			if @notify_teamcity; puts "##teamcity[blockOpened name='healthchecking']" end
 
 			puts "Starting health check"
@@ -37,7 +39,17 @@ module CloudDeploy
 					res = Net::HTTP.get_response(url)
 					if (res.code == "200")
 						puts "#{url} healthy!"
-						break
+						if (@version_header != nil && new_version != nil)
+							puts "    DEBUG: checking for version #{new_version}"
+							if (res['X-IS-Version'] == new_version)
+								puts "#{new_version} found! Success!"
+								break
+							else
+								puts "still looking for version, current: #{res['X-IS-Version']}"
+							end
+						else
+							break
+						end
 					end
 				rescue Exception => ex
 					if res != nil
