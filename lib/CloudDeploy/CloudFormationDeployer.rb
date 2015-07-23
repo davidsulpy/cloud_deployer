@@ -28,16 +28,15 @@ module CloudDeploy
 		end
  
 		def configure_aws()
-			AWS.config({
-				:access_key_id => @access_key_id,
-				:secret_access_key => @secret_access_key
+			Aws.config.update({
+				credentials: Aws::Credentials.new(@access_key_id, @secret_access_key)
 				})
 		end
  
 		def put_asset_in_s3(asset_location, bucket)
 			warn "[DEPRECATED] please use CloudDeploy::S3Helper instead..."
 			puts "Copying asset #{asset_location} to S3 bucket #{bucket}"
-			s3 = AWS::S3.new
+			s3 = Aws::S3.new
 			bucket = s3.buckets[bucket]
 			Dir.glob(asset_location) do |file_name|
 				base_name = File.basename(file_name)
@@ -64,7 +63,7 @@ module CloudDeploy
 		end
  
 		def check_if_exists(stack_name)
-			cloudformation = AWS::CloudFormation.new
+			cloudformation = Aws::CloudFormation.new
 
 			stack = cloudformation.stacks[stack_name]
 			if (stack.exists?)
@@ -79,7 +78,7 @@ module CloudDeploy
 			puts "Updating CloudFormation stack using template #{@template_location}"
 			app_template = File.read(@template_location, :encoding => 'UTF-8')
 
-			cloudformation = AWS::CloudFormation.new
+			cloudformation = Aws::CloudFormation.new
 			app_stackname = current_stack_name
 			
 			if (check_if_exists(current_stack_name) && cloudformation.stacks[current_stack_name].status == "CREATE_FAILED")
@@ -124,7 +123,7 @@ module CloudDeploy
 			puts "Getting CloudFormation template at #{@template_location}"
 			app_template = File.read(@template_location, :encoding => 'UTF-8')
 			
-			cloudformation = AWS::CloudFormation.new
+			cloudformation = Aws::CloudFormation.new
 			app_stackname = current_stack_name
 			
 			puts "deploying #{app_stackname}"
@@ -159,7 +158,7 @@ module CloudDeploy
  
 		def delete_stack(stack_name)
 			puts "deleting #{stack_name}"
-			cloudformation = AWS::CloudFormation.new
+			cloudformation = Aws::CloudFormation.new
 			stack = cloudformation.stacks[stack_name]
  
 			puts "#{stack_name} has current status #{stack.status}"
@@ -180,7 +179,7 @@ module CloudDeploy
 
 		def check_stack_status(stack_name, options = {})
 			status_title_message = "Monitoring AWS Stack Events for #{stack_name}"
-			cloudformation = AWS::CloudFormation.new
+			cloudformation = Aws::CloudFormation.new
 			stack = cloudformation.stacks[stack_name]
  			
  			success = true
@@ -263,7 +262,7 @@ module CloudDeploy
 			Curses.start_color
 			status_title_message = "Monitoring AWS Stack Events for #{stack_name}"
 			Curses.refresh
-			cloudformation = AWS::CloudFormation.new
+			cloudformation = Aws::CloudFormation.new
 			stack = cloudformation.stacks[stack_name]
  
 			if (stack.status == "CREATE_COMPLETE")
@@ -360,7 +359,7 @@ module CloudDeploy
 			end
  
 			begin
-				eip = AWS::EC2::ElasticIp.new(@elastic_ip)
+				eip = Aws::EC2::ElasticIp.new(@elastic_ip)
 				
 				associateOptions = {
 					:instance => instanceId
@@ -381,7 +380,7 @@ module CloudDeploy
 			
 			current_app_stackname = current_stack_name
 			
-			cloudformation = AWS::CloudFormation.new
+			cloudformation = Aws::CloudFormation.new
 			
 			cloudformation.stacks.each do |stack|
 				puts " # checking #{stack.name}"

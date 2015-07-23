@@ -15,9 +15,8 @@ module CloudDeploy
 			if (options[:secret_access_key] == nil || options[:secret_access_key] == '')
 				raise "secret_access_key cannot be empty or nil"
 			end
-			AWS.config({
-				:access_key_id => options[:access_key_id],
-				:secret_access_key => options[:secret_access_key]
+			Aws.config.update({
+				credentials: Aws::Credentials.new(options[:access_key_id], options[:secret_access_key])
 				})
 
 			@cf_distro_id = options[:cf_distro_id]
@@ -29,7 +28,7 @@ module CloudDeploy
 				raise "cf_distro_id needs to be provided in constructor"
 			end
 
-			cf = AWS::CloudFront.new
+			cf = Aws::CloudFront.new
 
 			cf.client.create_invalidation({
 					:distribution_id => @cf_distro_id,

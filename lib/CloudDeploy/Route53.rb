@@ -16,9 +16,9 @@ module CloudDeploy
 			if (options[:secret_access_key] == nil || options[:secret_access_key] == '')
 				raise "secret_access_key cannot be empty or nil"
 			end
-			AWS.config({
-				:access_key_id => options[:access_key_id],
-				:secret_access_key => options[:secret_access_key]
+
+			Aws.config.update({
+				credentials: Aws::Credentials.new(options[:access_key_id], options[:secret_access_key])
 				})
 		end
 
@@ -43,7 +43,7 @@ module CloudDeploy
 			end
 
 			puts "Updating DNS alias for name '#{dns_name}' setting alias to '#{new_alias}'"
-			r53 = AWS::Route53.new
+			r53 = Aws::Route53.new
 
 			hosted_zone = nil
 			r53.hosted_zones.each do |zone|
@@ -54,7 +54,7 @@ module CloudDeploy
 
 			record = hosted_zone.resource_record_sets[dns_name, 'A']
 
-			elb = AWS::ELB.new
+			elb = Aws::ELB.new
 
 			load_balancer = nil
 			elb.load_balancers.each do |balancer|

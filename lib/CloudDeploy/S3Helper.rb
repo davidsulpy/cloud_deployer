@@ -15,15 +15,14 @@ module CloudDeploy
 			if (options[:secret_access_key] == nil || options[:secret_access_key] == '')
 				raise "secret_access_key cannot be empty or nil"
 			end
-			AWS.config({
-				:access_key_id => options[:access_key_id],
-				:secret_access_key => options[:secret_access_key]
+			Aws.config.update({
+				credentials: Aws::Credentials.new(options[:access_key_id], options[:secret_access_key])
 				})
 		end
  
 		def put_asset_in_s3(asset_location, bucket, s3_path = "", content_type = "application/zip")
 			puts "Copying asset #{asset_location} to S3 bucket #{bucket}"
-			s3 = AWS::S3.new
+			s3 = Aws::S3.new
 			bucket = s3.buckets[bucket]
 			Dir.glob(asset_location) do |file_name|
 				base_name = File.basename(file_name)
