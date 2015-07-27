@@ -6,7 +6,7 @@
 module CloudDeploy
  
 	class EBDeployer
-		gem 'aws-sdk', '>= 2.0.0'
+		gem 'aws-sdk', '< 2.0.0'
 		require 'aws-sdk'
  
 		def initialize(options = {
@@ -27,7 +27,7 @@ module CloudDeploy
 		end
  
 		def update_application(version, source_bundle, option_settings = [])
-			beanstalk = Aws::ElasticBeanstalk.new(
+			beanstalk = AWS::ElasticBeanstalk.new(
 				:access_key_id => @access_key_id,
 				:secret_access_key => @secret_access_key)
  

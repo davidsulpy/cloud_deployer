@@ -11,7 +11,7 @@ module CloudDeploy
 
 		def initialize(options = {})
 			@template_location = options[:template_location]
-			@stack_name = options[:stack_name]
+			@stack_name = options[:stack_name].gsub(".", "-")
 			@cfn_vars = options[:cfn_vars]
 			@use_curses = options[:use_curses]
 			@disable_rollback = options[:disable_rollback] || true
@@ -34,27 +34,11 @@ module CloudDeploy
 				})
 		end
  
-		def put_asset_in_s3(asset_location, bucket)
-			warn "[DEPRECATED] please use CloudDeploy::S3Helper instead..."
-			puts "Copying asset #{asset_location} to S3 bucket #{bucket}"
-			s3 = Aws::S3.new
-			bucket = s3.buckets[bucket]
-			Dir.glob(asset_location) do |file_name|
-				base_name = File.basename(file_name)
-				remote_name = "#{base_name}"
-				puts " # Uploading #{remote_name}"
- 
-				#Uploading with a temp name and renaming to get around some weird bug.
-		 		obj = bucket.objects["_#{remote_name}"]		
-		 		obj.write(:data => File.open(file_name), :content_length => File.size(file_name), :content_type =>  'application/zip', :multipart_threshold => 100 * 1024 * 1024)
-		 		obj.move_to(remote_name)
-			end
-			puts "Finished pushing assets to S3!"
-		end
- 
 		def validate_template(cloudformation, template_contents)
 			puts " # validating template"
-			validationResponse = cloudformation.validate_template(template_contents)
+			validationResponse = cloudformation.validate_template({
+				template_body: template_contents
+				})
 			
 			if (validationResponse[:code])
 				raise "invalid template: #{validationResponse[:message]}"
@@ -64,41 +48,51 @@ module CloudDeploy
 		end
  
 		def check_if_exists(stack_name)
-			cloudformation = Aws::CloudFormation.new
+			stack = get_stack(stack_name)
 
-			stack = cloudformation.stacks[stack_name]
-			if (stack.exists?)
-				puts "stack exists with status #{stack.status}"
+			if (stack != nil)
+				puts "stack exists with status #{stack.stack_status}"
 				return true
 			end
 			puts "stack doesn't exist"
 			return false
 		end
 
-		def update_cloudformation_template()
-			puts "Updating CloudFormation stack using template #{@template_location}"
+		def get_stack(stack_name)
+			cf_client = Aws::CloudFormation::Client.new
+
+			stacks = cf_client.describe_stacks({
+				stack_name: stack_name
+				})
+			satck = stacks.find{|s| s.stack_name == stack_name}
+
+			return stack
+		end
+
+		def deploy_or_update_cloudformation()
+			puts "Deploying CloudFormation stack using template #{@template_location}"
 			app_template = File.read(@template_location, :encoding => 'UTF-8')
 
-			cloudformation = Aws::CloudFormation.new
-			app_stackname = current_stack_name
+			cloudformation = Aws::CloudFormation::Client.new
 			
-			if (check_if_exists(current_stack_name) && cloudformation.stacks[current_stack_name].status == "CREATE_FAILED")
-				puts "The stack #{current_stack_name} exists but has a CREATE_FAILED state, deleting it..."
-				delete_stack(current_stack_name)
+			existing_stack = get_stack(@stack_name)
+			if (existing_stack != nil && existing_stack.stack_status == "CREATE_FAILED")
+				puts "The stack #{@stack_name} exists but has a CREATE_FAILED state, deleting it..."
+				delete_stack(@stack_name)
 				return deploy_cloudformation_template()
 			end
 
-			puts "updating #{app_stackname}"
+			puts "updating #{@stack_name}"
 
 			validate_template(cloudformation, app_template)
 
 			puts " # updating stack"
-			stack = cloudformation.stacks[app_stackname]
 
-			if (stack != nil)
-				stack.update({
-					:template => app_template,
-					:parameters => @cfn_vars
+			if (existing_stack != nil)
+				resp = cloudformation.update_stack({
+					stack_name: @stack_name,
+					template_body: app_template,
+					parameters: @cfn_vars
 					})
 			end
 
@@ -106,7 +100,7 @@ module CloudDeploy
 			if (@use_curses)
 				success = check_stack_status_curses(current_stack_name)
 			else
-				success = check_stack_status(current_stack_name)
+				success = check_stack_status()
 			end
  			
 			if (!success)
@@ -159,248 +153,53 @@ module CloudDeploy
  
 		def delete_stack(stack_name)
 			puts "deleting #{stack_name}"
-			cloudformation = Aws::CloudFormation.new
-			stack = cloudformation.stacks[stack_name]
- 
-			puts "#{stack_name} has current status #{stack.status}"
-			stack.delete
-			puts "AWS has been informed to delete #{stack_name} #{stack.status}."
+			cloudformation = Aws::CloudFormation::Client.new
+ 	
+ 			cloudformation.delete_stack({
+ 				stack_name: stack_name
+ 				})
+			
+			puts "AWS has been informed to delete #{stack_name}."
 
-			if (@use_curses)
-				check_stack_status_curses(stack_name, {
-					:force_delete => true
-					})
-			else
-				check_stack_status(stack_name, {
-					:force_delete => true
-					})
-			end
+
+			check_stack_status(stack_name, {
+				:force_delete => true
+				:status => :stack_delete_complete
+				})
+
 			puts "Delete has finished!"
 		end
 
-		def check_stack_status(stack_name, options = {})
+		def check_stack_status(stack_name, options = { :status => :stack_create_complete})
 			status_title_message = "Monitoring AWS Stack Events for #{stack_name}"
-			cloudformation = Aws::CloudFormation.new
-			stack = cloudformation.stacks[stack_name]
+			cloudformation = Aws::CloudFormation::Client.new
  			
- 			success = true
-			if (stack.status == "CREATE_COMPLETE")
-				puts " # Create Complete!"
-			else
-				finished = false
-				while (!finished)
-					if (stack == nil || !stack.exists? || stack.status == "DELETE_COMPLETE")
-						puts "success! stack deleted."
-						finished = true
-						break
-					end
-					if (stack.status == "CREATE_COMPLETE")
-						puts "success! stack created!"
-						finished = true
-						break
-					elsif (stack.status == "UPDATE_COMPLETE")
-						puts "success! stack has been updated!"
-						finished = true
-						break
-					elsif (stack.status == "CREATE_FAILED")
-						puts "failed to create #{@app_name} stack. #{stack.status_reason}"
-						finished = true
-						success = false
-						break
-					elsif (stack.status == "UPDATE_FAILED")
-						puts "failed to update #{@app_name} stack. #{stack.status_reason}"
-						finished = true
-						success = false
-						break
-					elsif (stack.status == "UPDATE_ROLLBACK_COMPLETE")
-						puts "failed to update #{@app_name} stack. #{stack.status_reason}"
-						finished = true
-						success = false
-						break
-					elsif (stack.status == "DELETE_FAILED")
-						if (options[:force_delete])
-							puts " # Delete failed, attempting delete again"
-							stack.delete
-						else
-							puts "failed to delete #{stack_name} stack. #{stack.status_reason}"
-							finished = true
-							success = false
-							break
-						end
-					end
-					index = 2
-					stack.events.each do |event|
-						event_message = "[#{event.timestamp}] #{event.logical_resource_id}: #{event.resource_status} #{event.resource_status_reason}"
-						if (event_message.include? "CREATE_COMPLETE")
-							
-						end
-						index += 1
-					end
-					wait_sec = 15 # this is an interval to wait before checking the cloudformation stack status again
-					while (wait_sec > 0)
-						sleep 1
-						wait_sec -= 1
-					end
-				end
-			end
- 
-			stack.events.each do |event|
-				puts "#{event.timestamp},#{event.logical_resource_id}:,#{event.resource_status},#{event.resource_status_reason}"
-			end
-			puts "Status summary: #{stack.status} #{stack.status_reason}"
-			return success
-		end
- 
-		def check_stack_status_curses(stack_name, options = {})
-			begin
-				require 'curses'
-			rescue Exception
-				puts "Curses dependency doesn't exist, using non curses version..."
-				return check_stack_status(stack_name, options)
-			end
-			
-			Curses.init_screen
-			Curses.start_color
-			status_title_message = "Monitoring AWS Stack Events for #{stack_name}"
-			Curses.refresh
-			cloudformation = Aws::CloudFormation.new
-			stack = cloudformation.stacks[stack_name]
- 
-			if (stack.status == "CREATE_COMPLETE")
-				Curses.setpos(1,0)
-				Curses.addstr("#{stack_name} is created")
-				sleep 2
-				Curses.close_screen
-			else
-				finished = false
-				while (!finished)
-					Curses.addstr(status_title_message)
-					if (stack == nil || !stack.exists? || stack.status == "DELETE_COMPLETE")
-						Curses.close_screen
-						puts "success! stack deleted."
-						finished = true
-						break
-					end
-					if (stack.status == "CREATE_COMPLETE")
-						Curses.close_screen
-						puts "success! stack created!"
-						finished = true
-						break
-					elsif (stack.status == "UPDATE_COMPLETE")
-						Curses.close_screen
-						puts "success! stack has been updated!"
-						finished = true
-						break
-					elsif (stack.status == "CREATE_FAILED")
-						Curses.close_screen
-						puts "failed to create #{@app_name} stack. #{stack.status_reason}"
-						finished = true
-						break
-					elsif (stack.status == "UPDATE_FAILED")
-						Curses.close_screen
-						puts "failed to update #{@app_name} stack. #{stack.status_reason}"
-						finished = true
-						break
-					elsif (stack.status == "UPDATE_ROLLBACK_COMPLETE")
-						Curses.close_screen
-						puts "failed to update #{@app_name} stack. #{stack.status_reason}"
-						finished = true
-						break
-					elsif (stack.status == "DELETE_FAILED")
-						if (options[:force_delete])
-							Curses.setpos(1, 0)
-							Curses.addstr("Delete failed, attempting delete again.")
-							stack.delete
-						else
-							Curses.close_screen
-							puts "failed to delete #{stack_name} stack. #{stack.status_reason}"
-							finished = true
-							break
-						end
-					end
-					index = 2
-					stack.events.each do |event|
-						event_message = "[#{event.timestamp}] #{event.logical_resource_id}: #{event.resource_status} #{event.resource_status_reason}"
-						if (event_message.include? "CREATE_COMPLETE")
-							
-						end
-						Curses.setpos(index, 0)
-						Curses.addstr(event_message)
-						index += 1
-					end
-					Curses.refresh
-					wait_sec = 15 # this is an interval to wait before checking the cloudformation stack status again
-					while (wait_sec > 0)
-						Curses.setpos(1, (wait_sec-15))
-						Curses.addstr(">")
-						Curses.refresh
-						sleep 1
-						wait_sec -= 1
-					end
-					Curses.clear
-				end
-			end
- 
-			stack.events.each do |event|
-				puts "#{event.timestamp},#{event.logical_resource_id}:,#{event.resource_status},#{event.resource_status_reason}"
-			end
-			puts "Status summary: #{stack.status} #{stack.status_reason}"
-		end
- 
-		def switch_elastic_ip(elastic_ip, options = {})
-			@elastic_ip = elastic_ip
-			puts "Switching elastic IP for #{@app_name}"
-			
-			instanceId = @stack_outputs['InstanceId']
-			if (instanceId == nil || instanceId == "")
-				instanceId = options[:instance_id]
-				if (instanceId == nil || instanceId == "")
-					raise "Instance Id is not found."
-				end
-			end
- 
-			begin
-				eip = Aws::EC2::ElasticIp.new(@elastic_ip)
-				
-				associateOptions = {
-					:instance => instanceId
-				}
- 
-				if (eip.exists?)
-					eip.associate(associateOptions)
-					puts "New instance now associated with #{@elastic_ip}"
-				end
-				
-			rescue Exception => ex
-				raise "problem setting changing elastic ip. Exception Message: #{ex.message}"
-			end
-		end
- 
-		def delete_old_stacks(app_env, app_name)
-			puts "DELETING OLD STACKS FOR #{app_env} APP #{app_name}"
-			
-			current_app_stackname = current_stack_name
-			
-			cloudformation = Aws::CloudFormation.new
-			
-			cloudformation.stacks.each do |stack|
-				puts " # checking #{stack.name}"
-				if (stack.name == current_app_stackname)
-					puts " # # leaving #{stack.name}. (This is the current stack)"
-				elsif (stack.name.include? "#{app_env}") && (stack.name.include? "#{app_name}")
-					puts " # # DELETING stack: #{stack.name}"
-					stack.delete
-					puts " # # Delete sent!"
-				elsif
-					puts " # # leaving #{stack.name}. (This stack isn't my responsibility)"
-				end
-			end
-		end
- 
-		private
- 
-		def current_stack_name
-			return "#{@stack_name}".gsub(".", "-")
+ 			status = options[:status]
+
+ 			begin
+	 			cloudformation.wait_until(status, {
+	 				stack_name: stack_name
+	 				}) do |w|
+
+	 				w.before_attempt do |n|
+	 					puts "	# waiting for #{status} (attempt #{n})"
+	 				end
+	 			end
+	 		rescue Aws::Waiters::Errors::FailureStateError
+	 			puts "  # failed, stack is in a stuck state"
+	 			return false
+	 		rescue Aws::Waiters::Errors::TooManyAttempsError
+	 			puts "	# stack didn't become healthy fast enough..."
+	 			return false
+	 		rescue Aws::Waiters::Errors::UnexpectedError
+	 			puts "	# unexpected error occured"
+	 			return false
+	 		rescue Aws::Waiters::Errors::NoSuchWaiterError
+	 			puts "	# invalid wait status"
+	 			return false
+	 		end
+
+			return true
 		end
 	end
 

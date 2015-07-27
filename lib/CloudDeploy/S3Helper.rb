@@ -23,20 +23,23 @@ module CloudDeploy
  
 		def put_asset_in_s3(asset_location, bucket, s3_path = "", content_type = "application/zip")
 			puts "Copying asset #{asset_location} to S3 bucket #{bucket}"
-			s3 = Aws::S3.new
-			bucket = s3.buckets[bucket]
+			s3client = Aws::S3::Client.new
+
 			Dir.glob(asset_location) do |file_name|
 				base_name = File.basename(file_name)
 				remote_name = "#{base_name}"
 				if (s3_path != "")
 					remote_name = "#{s3_path}/#{base_name}"
 				end
-				puts " # Uploading #{remote_name}"
- 
-				#Uploading with a temp name and renaming to get around some weird bug.
-		 		obj = bucket.objects["_#{remote_name}"]		
-		 		obj.write(:data => File.open(file_name), :content_length => File.size(file_name), :content_type =>  content_type, :multipart_threshold => 100 * 1024 * 1024)
-		 		obj.move_to(remote_name)
+				puts "  # Uploading #{remote_name}"
+				
+				s3client.put_object({
+						bucket: bucket,
+						body: File.open(file_name),
+						key: remote_name,
+						content_type: content_type,
+						content_length: File.size(file_name)
+					})
 			end
 			puts "Finished pushing assets to S3!"
 		end

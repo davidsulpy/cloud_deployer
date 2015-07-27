@@ -44,40 +44,44 @@ module CloudDeploy
 			end
 
 			puts "Updating DNS alias for name '#{dns_name}' setting alias to '#{new_alias}'"
-			r53 = Aws::Route53.new
+			r53 = Aws::Route53::Client.new
 
 			hosted_zone = nil
-			r53.hosted_zones.each do |zone|
-				if (zone.name.casecmp(@hosted_zone_name) == 0)
-					hosted_zone = zone
-				end
+
+			hosted_zones = r53.list_hosted_zones()
+
+			hosted_zone = hosted_zones.find{|hz| hz.name.casecmp(@hosted_zone_name)}
+
+			if (hosted_zone == nil)
+				raise "hosted_zone_name #{hosted_zone_name} wasn't found in Route53"
 			end
 
-			record = hosted_zone.resource_record_sets[dns_name, 'A']
+			elb_client = Aws::ELB::Client.new
 
-			elb = Aws::ELB.new
+			load_balancers = elb_client.describe_load_balancers()
 
-			load_balancer = nil
-			elb.load_balancers.each do |balancer|
-				dns_name = balancer.dns_name + "."
+			load_balancer = load_balancers.find{|elb| "#{elb.dns_name}.".casecmp(new_alias) == 0}
 
-				if (dns_name.casecmp(new_alias) == 0)
-					load_balancer = balancer
-				end
-			end
-
-			if (record.alias_target[:dns_name].include? new_alias)
-				puts "The target record already has this new alias, so no change is needed."
-				return
-			end
-
-			record.alias_target = {
-				:hosted_zone_id => load_balancer.canonical_hosted_zone_name_id,
-				:dns_name => new_alias,
-				:evaluate_target_health => false
-			}
-
-			record.update
+			r53.change_resource_record_sets({
+				hosted_zone_id: hosted_zone.id,
+				change_batch: {
+					comment: "Updating Record For Deployment",
+					changes: [
+						{
+							action: "UPSERT",
+							resource_record_set: {
+								name: dns_name,
+								type: "A"
+							},
+							alias_target: {
+								hosted_zone_id: load_balancer.canonical_hosted_zone_name_id,
+								dns_name: new_alias,
+								evaluate_target_health: false
+							}
+						}
+					]
+				}
+				})
 
 		end
 	end
