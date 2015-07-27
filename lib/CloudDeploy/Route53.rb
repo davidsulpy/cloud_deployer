@@ -6,6 +6,7 @@
 module CloudDeploy
 
 	class Route53
+		gem 'aws-sdk', '>= 2.0.0'
 		require 'aws-sdk'
 		@hosted_zone_name = ""
 		def initialize(options = {})
