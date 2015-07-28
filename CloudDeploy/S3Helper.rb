@@ -6,6 +6,7 @@
 module CloudDeploy
 
 	class S3Helper
+		gem 'aws-sdk', '< 2.0.0'
 		require 'aws-sdk'
  
 		def initialize (options = {})
