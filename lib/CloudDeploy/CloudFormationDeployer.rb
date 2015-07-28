@@ -163,7 +163,7 @@ module CloudDeploy
 
 
 			check_stack_status(stack_name, {
-				:force_delete => true
+				:force_delete => true,
 				:status => :stack_delete_complete
 				})
 
