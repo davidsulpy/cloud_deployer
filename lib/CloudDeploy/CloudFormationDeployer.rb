@@ -93,11 +93,20 @@ module CloudDeploy
 
 			puts " # updating stack"
 
+			template_params = []
+
+			@cfn_vars.each do |key, value|
+				template_params.push({
+					parameter_key: key,
+					parameter_value: value
+					})
+			end
+
 			if (existing_stack != nil)
 				resp = cloudformation.update_stack({
 					stack_name: @stack_name,
 					template_body: app_template,
-					parameters: @cfn_vars
+					parameters: template_params
 					})
 			end
 
