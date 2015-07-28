@@ -69,7 +69,7 @@ module CloudDeploy
 			resp = cf_client.describe_stacks({
 				stack_name: stack_name
 				})
-			satck = resp.stacks.find{|s| s.stack_name == stack_name}
+			stack = resp.stacks.find{|s| s.stack_name == stack_name}
 
 			return stack
 		end
