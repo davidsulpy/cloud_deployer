@@ -15,7 +15,6 @@ module CloudDeploy
 			@template_location = options[:template_location]
 			@stack_name = options[:stack_name].gsub(".", "-")
 			@cfn_vars = options[:cfn_vars]
-			@use_curses = options[:use_curses]
 			@disable_rollback = options[:disable_rollback] || true
  
 			if (options[:access_key_id] == nil || options[:access_key_id] == '')
@@ -110,20 +109,18 @@ module CloudDeploy
 					})
 			end
 
-			success = false
-			if (@use_curses)
-				success = check_stack_status_curses(current_stack_name)
-			else
-				success = check_stack_status()
-			end
+			success = check_stack_status(@stack_name)
  			
 			if (!success)
-				raise "Updating the cloudformations tack failed, check logs for details"
+				raise "Updating the cloudformation stack failed, check logs for details"
 			end
 
 			@stack_outputs = {}
+
+			stack = get_stack(@stack_name)
+
 			stack.outputs.each do |output|
-				@stack_outputs[output.key] = output.value
+				@stack_outputs[output.output_key] = output.output_value
 			end
 			return @stack_outputs
 		end
@@ -133,35 +130,44 @@ module CloudDeploy
 			app_template = File.read(@template_location, :encoding => 'UTF-8')
 			
 			cloudformation = Aws::CloudFormation.new
-			app_stackname = current_stack_name
 			
 			puts "deploying #{app_stackname}"
 			
 			validate_template(cloudformation, app_template)
  
 			puts " # creating stack"
-			stack = cloudformation.stacks.create(app_stackname, app_template,
-				:capabilities => ['CAPABILITY_IAM'],
-				:disable_rollback => @disable_rollback,
-				:parameters => @cfn_vars
-				)
-			
-			success = true
-			if (@use_curses)
-				success = check_stack_status_curses(current_stack_name)
-			else
-				success = check_stack_status(current_stack_name)
+
+			template_params = []
+
+			@cfn_vars.each do |key, value|
+				template_params.push({
+					parameter_key: key,
+					parameter_value: value
+					})
 			end
+
+			resp = cloudformation.create_stack(
+				{
+					stack_name: @stack_name,
+					template_body: app_template,
+					parameters: template_params,
+					disable_rollback: @disable_rollback,
+					capabilities: ['CAPABILITY_IAM']
+				})
+			
+			success = check_stack_status(@stack_name)
  			
  			if (!success)
  				raise "Deploying the cloudformation stack failed, check logs for details"
  			end
 
 			@stack_outputs = {}
-			stack.outputs.each do |output|
-				@stack_outputs[output.key] = output.value
-			end
 
+			stack = get_stack(@stack_name)
+
+			stack.outputs.each do |output|
+				@stack_outputs[output.output_key] = output.output_value
+			end
 			return @stack_outputs
 		end
  
