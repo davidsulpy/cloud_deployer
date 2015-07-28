@@ -9,7 +9,9 @@ module CloudDeploy
 		gem 'aws-sdk', '>= 2.0.0'
 		require 'aws-sdk'
 
-		def initialize(options = {})
+		def initialize(options = {
+			:region => 'us-east-1'
+			})
 			@template_location = options[:template_location]
 			@stack_name = options[:stack_name].gsub(".", "-")
 			@cfn_vars = options[:cfn_vars]
@@ -25,12 +27,9 @@ module CloudDeploy
 			@access_key_id = options[:access_key_id]
 			@secret_access_key = options[:secret_access_key]
  
-			configure_aws()
-		end
- 
-		def configure_aws()
 			Aws.config.update({
-				credentials: Aws::Credentials.new(@access_key_id, @secret_access_key)
+				credentials: Aws::Credentials.new(@access_key_id, @secret_access_key),
+				region: options[:region]
 				})
 		end
  

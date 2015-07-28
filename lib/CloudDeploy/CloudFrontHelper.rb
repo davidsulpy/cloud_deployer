@@ -9,7 +9,9 @@ module CloudDeploy
 		gem 'aws-sdk', '>= 2.0.0'
 		require 'aws-sdk'
  
-		def initialize (options = {})
+		def initialize (options = {
+			:region => 'us-east-1'
+			})
 			if (options[:access_key_id] == nil || options[:access_key_id] == '')
 				raise "access_key_id cannot be empty or nil"
 			end
@@ -17,7 +19,8 @@ module CloudDeploy
 				raise "secret_access_key cannot be empty or nil"
 			end
 			Aws.config.update({
-				credentials: Aws::Credentials.new(options[:access_key_id], options[:secret_access_key])
+				credentials: Aws::Credentials.new(options[:access_key_id], options[:secret_access_key]),
+				region: options[:region]
 				})
 
 			@cf_distro_id = options[:cf_distro_id]

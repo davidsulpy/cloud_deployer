@@ -9,7 +9,9 @@ module CloudDeploy
 		gem 'aws-sdk', '>= 2.0.0'
 		require 'aws-sdk'
 		@hosted_zone_name = ""
-		def initialize(options = {})
+		def initialize(options = {
+			:region => 'us-east-1'
+			})
 			@hosted_zone_name = options[:hosted_zone_name]
 			if (options[:access_key_id] == nil || options[:access_key_id] == '')
 				raise "access_key_id cannot be empty or nil"
@@ -19,7 +21,8 @@ module CloudDeploy
 			end
 
 			Aws.config.update({
-				credentials: Aws::Credentials.new(options[:access_key_id], options[:secret_access_key])
+				credentials: Aws::Credentials.new(options[:access_key_id], options[:secret_access_key]),
+				region: options[:region]
 				})
 		end
 
