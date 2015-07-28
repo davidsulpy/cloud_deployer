@@ -202,6 +202,9 @@ module CloudDeploy
 	 				stack_name: stack_name
 	 				}) do |w|
 
+	 				if (options[:status] == :stack_update_complete)
+	 					w.max_attempts = 40
+	 				end
 	 				w.before_attempt do |n|
 	 					puts "	# waiting for #{status} (attempt #{n})"
 	 				end
@@ -209,7 +212,7 @@ module CloudDeploy
 	 		rescue Aws::Waiters::Errors::FailureStateError
 	 			puts "  # failed, stack is in a stuck state"
 	 			return false
-	 		rescue Aws::Waiters::Errors::TooManyAttempsError
+	 		rescue Aws::Waiters::Errors::TooManyAttemptsError
 	 			puts "	# stack didn't become healthy fast enough..."
 	 			return false
 	 		rescue Aws::Waiters::Errors::UnexpectedError
