@@ -107,9 +107,10 @@ module CloudDeploy
 					template_body: app_template,
 					parameters: template_params
 					})
+				success = check_stack_status(@stack_name, {
+						:status => :stack_update_complete
+					})
 			end
-
-			success = check_stack_status(@stack_name)
  			
 			if (!success)
 				raise "Updating the cloudformation stack failed, check logs for details"
