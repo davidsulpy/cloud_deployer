@@ -32,18 +32,24 @@ module CloudDeploy
 				region: options[:region]
 				})
 		end
+
+		def validate_template_pub()
+			return validate_template(Aws::CloudFormation::Client.new, File.read(@template_location, :encoding => 'UTF-8'))
+		end
  
 		def validate_template(cloudformation, template_contents)
 			puts " # validating template"
-			validationResponse = cloudformation.validate_template({
-				template_body: template_contents
-				})
-			
-			if (validationResponse[:code])
-				raise "invalid template: #{validationResponse[:message]}"
-			else
-				puts " # # template VALID!"
+
+			begin
+				validationResponse = cloudformation.validate_template({
+					template_body: template_contents
+					})
+			rescue Aws::CloudFormation::Errors::ValidationError => error
+				puts " # # invalid template #{error}"
+				return
 			end
+			
+			puts " # # template valid!"
 		end
  
 		def check_if_exists(stack_name)
@@ -60,10 +66,10 @@ module CloudDeploy
 		def get_stack(stack_name)
 			cf_client = Aws::CloudFormation::Client.new
 
-			stacks = cf_client.describe_stacks({
+			resp = cf_client.describe_stacks({
 				stack_name: stack_name
 				})
-			satck = stacks.find{|s| s.stack_name == stack_name}
+			satck = resp.stacks.find{|s| s.stack_name == stack_name}
 
 			return stack
 		end
