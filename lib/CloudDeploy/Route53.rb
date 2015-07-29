@@ -51,9 +51,9 @@ module CloudDeploy
 
 			hosted_zone = nil
 
-			hosted_zones = r53.list_hosted_zones()
+			resp = r53.list_hosted_zones()
 
-			hosted_zone = hosted_zones.find{|hz| hz.name.casecmp(@hosted_zone_name)}
+			hosted_zone = resp.hosted_zones.find{|hz| hz.name.casecmp(@hosted_zone_name)}
 
 			if (hosted_zone == nil)
 				raise "hosted_zone_name #{hosted_zone_name} wasn't found in Route53"
@@ -61,9 +61,9 @@ module CloudDeploy
 
 			elb_client = Aws::ELB::Client.new
 
-			load_balancers = elb_client.describe_load_balancers()
+			resp = elb_client.describe_load_balancers()
 
-			load_balancer = load_balancers.find{|elb| "#{elb.dns_name}.".casecmp(new_alias) == 0}
+			load_balancer = resp.load_balancer_descriptions.find{|elb| "#{elb.dns_name}.".casecmp(new_alias) == 0}
 
 			r53.change_resource_record_sets({
 				hosted_zone_id: hosted_zone.id,
