@@ -74,12 +74,12 @@ module CloudDeploy
 							action: "UPSERT",
 							resource_record_set: {
 								name: dns_name,
-								type: "A"
-							},
-							alias_target: {
-								hosted_zone_id: load_balancer.canonical_hosted_zone_name_id,
-								dns_name: new_alias,
-								evaluate_target_health: false
+								type: "A",
+								alias_target: {
+									hosted_zone_id: load_balancer.canonical_hosted_zone_name_id,
+									dns_name: new_alias,
+									evaluate_target_health: false
+								}
 							}
 						}
 					]
