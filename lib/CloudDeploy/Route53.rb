@@ -59,7 +59,7 @@ module CloudDeploy
 				raise "hosted_zone_name #{hosted_zone_name} wasn't found in Route53"
 			end
 
-			elb_client = Aws::ELB::Client.new
+			elb_client = Aws::ElasticLoadBalancing::Client.new
 
 			resp = elb_client.describe_load_balancers()
 
