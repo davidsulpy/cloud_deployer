@@ -80,7 +80,10 @@ module CloudDeploy
 			cloudformation = Aws::CloudFormation::Client.new
 			
 			existing_stack = get_stack(@stack_name)
-			if (existing_stack != nil && existing_stack.stack_status == "CREATE_FAILED")
+			if (existing_stack == nil)
+				puts "The stack #{@stack_name} doesn't exist, creating"
+				return deploy_cloudformation_template()
+			elsif (existing_stack != nil && existing_stack.stack_status == "CREATE_FAILED")
 				puts "The stack #{@stack_name} exists but has a CREATE_FAILED state, deleting it..."
 				delete_stack(@stack_name)
 				return deploy_cloudformation_template()
