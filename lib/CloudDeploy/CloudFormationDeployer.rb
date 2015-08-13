@@ -65,12 +65,15 @@ module CloudDeploy
 		def get_stack(stack_name)
 			cf_client = Aws::CloudFormation::Client.new
 
-			resp = cf_client.describe_stacks({
-				stack_name: stack_name
-				})
-			stack = resp.stacks.find{|s| s.stack_name == stack_name}
-
-			return stack
+			begin
+				resp = cf_client.describe_stacks({
+					stack_name: stack_name
+					})
+				stack = resp.stacks.find{|s| s.stack_name == stack_name}
+				return stack
+			rescue Aws::CloudFormation::Errors::ValidationError
+				return nil
+			end
 		end
 
 		def deploy_or_update_cloudformation()
