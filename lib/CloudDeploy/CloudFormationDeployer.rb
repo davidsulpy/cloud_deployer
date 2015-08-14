@@ -138,7 +138,7 @@ module CloudDeploy
 			
 			cloudformation = Aws::CloudFormation::Client.new
 			
-			puts "deploying #{app_stackname}"
+			puts "deploying #{@stack_name}"
 			
 			validate_template(cloudformation, app_template)
  
