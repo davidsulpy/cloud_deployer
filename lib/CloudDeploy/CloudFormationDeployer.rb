@@ -136,7 +136,7 @@ module CloudDeploy
 			puts "Getting CloudFormation template at #{@template_location}"
 			app_template = File.read(@template_location, :encoding => 'UTF-8')
 			
-			cloudformation = Aws::CloudFormation.new
+			cloudformation = Aws::CloudFormation::Client.new
 			
 			puts "deploying #{app_stackname}"
 			
