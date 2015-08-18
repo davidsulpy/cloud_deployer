@@ -86,7 +86,7 @@ module CloudDeploy
 			if (existing_stack == nil)
 				puts "The stack #{@stack_name} doesn't exist, creating"
 				return deploy_cloudformation_template()
-			elsif (existing_stack != nil && existing_stack.stack_status == "CREATE_FAILED")
+			elsif (existing_stack != nil && (existing_stack.stack_status == "CREATE_FAILED" || existing_stack.stack_status == "UPDATE_ROLLBACK_FAILED"))
 				puts "The stack #{@stack_name} exists but has a CREATE_FAILED state, deleting it..."
 				delete_stack(@stack_name)
 				return deploy_cloudformation_template()
