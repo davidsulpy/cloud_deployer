@@ -14,12 +14,14 @@ module CloudDeploy
 				sleep: "linear",
 				version_header: nil,
 				debug: true,
+				raise_on_unhealthy: true
 			})
 			@sleep_calc = options[:sleep]
 			@use_teamcity = options[:notify_teamcity]
 			@health_attempts = options[:health_attempts]
 			@debug = options[:debug]
 			@version_header = options[:version_header]
+			@raise_on_unhealthy = options[:raise_on_unhealthy]
 		end
 
 		def check_health(full_endpoint, new_version = nil)
@@ -29,7 +31,12 @@ module CloudDeploy
 
 			health_attempts = @health_attempts
 			sleep_time = 2
-			while (health_attempts > 0)
+			while (health_attempts >= 0)
+				if (health_attempts == 0)
+					if (@raise_on_unhealthy)
+						raise "Endpoint never became healthy"
+					end
+				end
 				url = full_endpoint.gsub("https://", "http://")
 
 				if @debug; puts "    DEBUG: checking #{url}" end
@@ -57,13 +64,13 @@ module CloudDeploy
 					end
 					if @debug; puts "    DEBUG: #{ex.message} (#{url})" end
 				end
+				health_attempts = health_attempts - 1
 				puts "  still checking #{url} health (#{health_attempts} more attempts left, sleeping #{sleep_time} seconds)"
 				sleep sleep_time
 
 				if @sleep_calc == "linear"; sleep_time = sleep_time * 2 end
 
-				if sleep_time > 120; sleep_time = 120 end 
-				health_attempts = health_attempts - 1
+				if sleep_time > 120; sleep_time = 120 end
 			end
 			if @notify_teamcity; puts "##teamcity[blockClosed name='healthchecking']" end
 		end
