@@ -10,12 +10,14 @@ module CloudDeploy
 		require 'aws-sdk'
 
 		def initialize(options = {
-			:region => 'us-east-1'
+			region: 'us-east-1',
+			notify_teamcity: true
 			})
 			@template_location = options[:template_location]
 			@stack_name = options[:stack_name].gsub(".", "-")
 			@cfn_vars = options[:cfn_vars]
 			@disable_rollback = options[:disable_rollback] || true
+			@notify_teamcity = options[:notify_teamcity]
  
 			if (options[:access_key_id] == nil || options[:access_key_id] == '')
 				raise "access_key_id cannot be empty or nil"
@@ -216,15 +218,27 @@ module CloudDeploy
 	 				end
 	 			end
 	 		rescue Aws::Waiters::Errors::FailureStateError
+	 			if (@notify_teamcity)
+	 				puts "##teamcity[message text='CloudFormation FailureStateError' errorDetails='failed, stack may be in a stuck state' status='ERROR']"
+	 			end
 	 			puts "  # failed, stack is in a stuck state"
 	 			return false
 	 		rescue Aws::Waiters::Errors::TooManyAttemptsError
+	 			if (@notify_teamcity)
+	 				puts "##teamcity[message text='CloudFormation TooManyAttemptsError' errorDetails='CloudFormation stack didn't arrive at the specified status in enough checks' status='ERROR']"
+	 			end
 	 			puts "	# stack didn't become healthy fast enough..."
 	 			return false
 	 		rescue Aws::Waiters::Errors::UnexpectedError
+	 			if (@notify_teamcity)
+	 				puts "##teamcity[message text='CloudFormation UnexpectedError' errorDetails='unexpected error occured deploying CloudFormation template' status='ERROR']"
+	 			end
 	 			puts "	# unexpected error occured"
 	 			return false
 	 		rescue Aws::Waiters::Errors::NoSuchWaiterError
+	 			if (@notify_teamcity)
+	 				puts "##teamcity[message text='CloudFormation NoSuchWaiterError' errorDetails='invalid CloudFormation stack wait status' status='ERROR']"
+	 			end
 	 			puts "	# invalid wait status"
 	 			return false
 	 		end
