@@ -219,25 +219,25 @@ module CloudDeploy
 	 			end
 	 		rescue Aws::Waiters::Errors::FailureStateError
 	 			if (@notify_teamcity)
-	 				puts "##teamcity[message text='CloudFormation FailureStateError' errorDetails='failed, stack may be in a stuck state' status='ERROR']"
+	 				puts "##teamcity[message text='CloudFormation FailureStateError' errorDetails='failed, stack may be in a stuck state' status='FAILURE']"
 	 			end
 	 			puts "  # failed, stack is in a stuck state"
 	 			return false
 	 		rescue Aws::Waiters::Errors::TooManyAttemptsError
 	 			if (@notify_teamcity)
-	 				puts "##teamcity[message text='CloudFormation TooManyAttemptsError' errorDetails='CloudFormation stack didn't arrive at the specified status in enough checks' status='ERROR']"
+	 				puts "##teamcity[message text='CloudFormation TooManyAttemptsError' errorDetails='CloudFormation stack didn't arrive at the specified status in enough checks' status='FAILURE']"
 	 			end
 	 			puts "	# stack didn't become healthy fast enough..."
 	 			return false
 	 		rescue Aws::Waiters::Errors::UnexpectedError
 	 			if (@notify_teamcity)
-	 				puts "##teamcity[message text='CloudFormation UnexpectedError' errorDetails='unexpected error occured deploying CloudFormation template' status='ERROR']"
+	 				puts "##teamcity[message text='CloudFormation UnexpectedError' errorDetails='unexpected error occured deploying CloudFormation template' status='FAILURE']"
 	 			end
 	 			puts "	# unexpected error occured"
 	 			return false
 	 		rescue Aws::Waiters::Errors::NoSuchWaiterError
 	 			if (@notify_teamcity)
-	 				puts "##teamcity[message text='CloudFormation NoSuchWaiterError' errorDetails='invalid CloudFormation stack wait status' status='ERROR']"
+	 				puts "##teamcity[message text='CloudFormation NoSuchWaiterError' errorDetails='invalid CloudFormation stack wait status' status='FAILURE']"
 	 			end
 	 			puts "	# invalid wait status"
 	 			return false
