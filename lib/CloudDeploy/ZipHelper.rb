@@ -36,6 +36,11 @@ module CloudDeploy
       @patterns_to_ignore.each do |pattern|
         entries.delete(pattern)
       end
+
+      if (@verbose)
+        puts "archiving these things: #{entries}"
+      end
+
       io = Zip::File.open(@outputFile, Zip::File::CREATE);
 
       writeEntries(entries, "", io)
