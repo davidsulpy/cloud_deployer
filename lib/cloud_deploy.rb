@@ -10,6 +10,7 @@ require_relative './CloudDeploy/CloudFormationDeployer'
 require_relative './CloudDeploy/EndpointHealthchecker'
 require_relative './CloudDeploy/CloudFrontHelper'
 require_relative './CloudDeploy/BaseAmiHelper'
+require_relative './CloudDeploy/ZipHelper'
 
 module CloudDeploy
 end
