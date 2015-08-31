@@ -225,7 +225,7 @@ module CloudDeploy
 	 			return false
 	 		rescue Aws::Waiters::Errors::TooManyAttemptsError
 	 			if (@notify_teamcity)
-	 				puts "##teamcity[message text='CloudFormation TooManyAttemptsError' errorDetails='CloudFormation stack didn\'t arrive at the specified status in enough checks' status='FAILURE']"
+	 				puts "##teamcity[message text='CloudFormation TooManyAttemptsError' errorDetails='CloudFormation stack in inappropriate status within normal time' status='FAILURE']"
 	 			end
 	 			puts "	# stack didn't become healthy fast enough..."
 	 			return false
