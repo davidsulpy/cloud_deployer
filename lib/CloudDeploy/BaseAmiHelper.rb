@@ -42,7 +42,10 @@ module CloudDeploy
 				})
 
 			sorted_base_amis = resp.images.sort {|a,b| b.creation_date <=> a.creation_date}
-
+			if (sorted_base_amis.count >= 0)
+				puts "no amis found..."
+				return nil
+			end
 			puts "found latest ami #{sorted_base_amis[0].name} (#{sorted_base_amis[0].image_id})"
 			return "#{sorted_base_amis[0].image_id}"
 		end
