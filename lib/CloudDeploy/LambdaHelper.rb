@@ -38,7 +38,7 @@ module CloudDeploy
 				if (resp.configuration.function_name == options[:function_name])
 					function_exists = true
 				end
-			rescue Error => error
+			rescue => error
 				puts "#{error}"
 			end
 
