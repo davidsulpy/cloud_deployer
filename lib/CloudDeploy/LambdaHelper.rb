@@ -49,7 +49,7 @@ module CloudDeploy
 						s3_bucket: options[:code][:s3_bucket],
 						s3_key: options[:code][:s3_key]
 						})
-				rescue Error => error
+				rescue => error
 					puts "failed to update the existing functions code: #{error}"
 					raise error
 				end
@@ -63,7 +63,7 @@ module CloudDeploy
 						timeout: options[:timeout],
 						memory_size: options[:memory_size]
 						})
-				rescue Error => error
+				rescue => error
 					puts "failed to update the existing functions configuration: #{error}"
 					raise error
 				end
@@ -72,7 +72,7 @@ module CloudDeploy
 			else
 				begin
 					lambda.create_function(options)
-				rescue Error => error
+				rescue => error
 					puts "Failed to create the function: #{error}"
 					raise error
 				end
