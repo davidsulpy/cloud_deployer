@@ -33,7 +33,7 @@ module CloudDeploy
 			function_exists = false
 			begin
 				resp = lambda.get_function({
-					options[:function_name]
+					function_name: options[:function_name]
 					})
 				if (resp.configuration.function_name == options[:function_name])
 					function_exists = true
