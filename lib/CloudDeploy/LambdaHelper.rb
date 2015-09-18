@@ -27,6 +27,40 @@ module CloudDeploy
 				})
 		end
 
+		def create_or_update_event_source(options = {})
+			lambda = Aws::Lambda::Client.new()
+
+			resp = lambda.list_event_source_mappings({
+				function_name: options[:function_name]
+				})
+
+			if (resp.event_source_mappings.count > 0)
+				event_source_to_update = resp.event_source_mappings.fund{|esm| esm.event_source_arn == options[:event_source_arn]}
+
+				if (event_source_to_update != nil)
+					lambda.update_event_source_mapping({
+						uuid: event_source_to_update.uuid,
+						function_name: options[:function_name],
+						enabled: options[:enabled],
+						batch_size: options[:batch_size]
+						})
+				end
+
+				puts "finished updating event source mapping"
+			else
+				begin
+					lambda.create_event_source_mapping(options)
+				rescue => e
+					puts "failed to create event source: #{e}"
+					raise e
+				end
+
+				puts "finished creating event source mapping"
+			end
+
+			
+		end
+
 		def create_or_update_function(options = {})
 			lambda = Aws::Lambda::Client.new()
 
