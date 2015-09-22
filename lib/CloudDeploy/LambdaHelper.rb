@@ -35,7 +35,7 @@ module CloudDeploy
 				})
 
 			if (resp.event_source_mappings.count > 0)
-				event_source_to_update = resp.event_source_mappings.fund{|esm| esm.event_source_arn == options[:event_source_arn]}
+				event_source_to_update = resp.event_source_mappings.find{|esm| esm.event_source_arn == options[:event_source_arn]}
 
 				if (event_source_to_update != nil)
 					lambda.update_event_source_mapping({
