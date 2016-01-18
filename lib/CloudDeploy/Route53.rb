@@ -55,9 +55,10 @@ module CloudDeploy
 
 			puts "hosted zone '#{@hosted_zone_name}'"
 			hosted_zone = resp.hosted_zones.find{|hz| hz.name.casecmp(@hosted_zone_name)}
+			puts "hosted zone id '#{hosted_zone.id}"
 
 			if (hosted_zone == nil)
-				raise "hosted_zone_name #{hosted_zone_name} wasn't found in Route53"
+				raise "hosted_zone_name #{@hosted_zone_name} wasn't found in Route53"
 			end
 
 			elb_client = Aws::ElasticLoadBalancing::Client.new
