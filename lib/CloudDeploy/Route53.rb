@@ -56,6 +56,7 @@ module CloudDeploy
 			puts "hosted zone '#{@hosted_zone_name}'"
 			hosted_zone = resp.hosted_zones.find{|hz| hz.name.casecmp(@hosted_zone_name)}
 			puts "hosted zone id '#{hosted_zone.id}"
+			puts "hosted zone ids '#{resp.hosted_zones}'"
 
 			if (hosted_zone == nil)
 				raise "hosted_zone_name #{@hosted_zone_name} wasn't found in Route53"
