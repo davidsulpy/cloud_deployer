@@ -53,6 +53,7 @@ module CloudDeploy
 
 			resp = r53.list_hosted_zones()
 
+			puts "hosted zone '#{@hosted_zone_name}'"
 			hosted_zone = resp.hosted_zones.find{|hz| hz.name.casecmp(@hosted_zone_name)}
 
 			if (hosted_zone == nil)
