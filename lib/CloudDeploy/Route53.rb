@@ -54,7 +54,7 @@ module CloudDeploy
 			resp = r53.list_hosted_zones()
 
 			puts "hosted zone '#{@hosted_zone_name}'"
-			hosted_zone = resp.hosted_zones.find{|hz| hz.name.casecmp(@hosted_zone_name)}
+			hosted_zone = resp.hosted_zones.find{|hz| hz.name == @hosted_zone_name}
 			puts "hosted zone id '#{hosted_zone.id}"
 			puts "hosted zone ids '#{resp.hosted_zones}'"
 
