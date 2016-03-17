@@ -66,6 +66,7 @@ module CloudDeploy
 
 		end
 
+		# this method was adapted from a class provided by Avi Tzurel http://avi.io/blog/2013/12/03/upload-folder-to-s3-recursively/
 	    def upload(folder_path, bucket_name, thread_count = 5)
 			s3client = Aws::S3::Client.new
 
