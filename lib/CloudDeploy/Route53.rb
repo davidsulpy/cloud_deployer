@@ -26,6 +26,64 @@ module CloudDeploy
 				})
 		end
 
+		def update_dns_cname(dns_name, cname, hosted_zone_name = "")
+			if (hosted_zone_name != "")
+				@hosted_zone_name = hosted_zone_name
+			end
+
+			# make sure there is no protocol indicator on the dns names
+			cname = cname.sub("http://", "").sub("https://", "")
+			dns_name = dns_name.sub("http://", "").sub("https://", "")
+
+			if (! dns_name.end_with? ".")
+				dns_name += "."
+			end
+			if (! @hosted_zone_name.end_with? ".")
+				@hosted_zone_name += "."
+			end
+
+			puts "Updating DNS cname for name '#{dns_name}' setting cname to '#{cname}'"
+			r53 = Aws::Route53::Client.new
+
+			hosted_zone = nil
+
+			resp = r53.list_hosted_zones()
+
+			puts "hosted zone '#{@hosted_zone_name}'"
+			hosted_zone = resp.hosted_zones.find{|hz| hz.name == @hosted_zone_name}
+
+			if (hosted_zone == nil)
+				raise "hosted_zone_name #{@hosted_zone_name} wasn't found in Route53"
+			end
+
+			puts "hosted zone id '#{hosted_zone.id}"
+
+			req = {
+				hosted_zone_id: hosted_zone.id,
+				change_batch: {
+					comment: "Updating Record For Deployment",
+					changes: [
+						{
+							action: "UPSERT",
+							resource_record_set: {
+								name: dns_name,
+								type: "CNAME",
+								resource_records: [
+									{
+										value: cname
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+
+			puts "#{req}"
+			r53.change_resource_record_sets(req)
+
+		end
+
 		def update_dns_alias(dns_name, new_alias, hosted_zone_name = "")
 			if (hosted_zone_name != "")
 				@hosted_zone_name = hosted_zone_name
@@ -55,12 +113,11 @@ module CloudDeploy
 
 			puts "hosted zone '#{@hosted_zone_name}'"
 			hosted_zone = resp.hosted_zones.find{|hz| hz.name == @hosted_zone_name}
-			puts "hosted zone id '#{hosted_zone.id}"
-			puts "hosted zone ids '#{resp.hosted_zones}'"
-
+			
 			if (hosted_zone == nil)
 				raise "hosted_zone_name #{@hosted_zone_name} wasn't found in Route53"
 			end
+			puts "hosted zone id '#{hosted_zone.id}"
 
 			elb_client = Aws::ElasticLoadBalancing::Client.new
 
