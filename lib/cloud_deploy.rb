@@ -12,6 +12,7 @@ require_relative './CloudDeploy/CloudFrontHelper'
 require_relative './CloudDeploy/BaseAmiHelper'
 require_relative './CloudDeploy/ZipHelper'
 require_relative './CloudDeploy/LambdaHelper'
+require_relative './CloudDeploy/StaticWebsiteDeployer'
 
 module CloudDeploy
 end
