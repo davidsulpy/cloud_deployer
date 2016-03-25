@@ -23,7 +23,7 @@ module CloudDeploy
 			if (options[:region] == nil)
 				region = 'us-east-1'
 			end
-			
+
 			Aws.config.update({
 				credentials: Aws::Credentials.new(options[:access_key_id], options[:secret_access_key]),
 				region: region
@@ -57,8 +57,10 @@ module CloudDeploy
 					:id => resp.invalidation.id
 					}) do |w|
 
+					w.max_attempts = 100
+					w.delay = 20
 					w.before_attempt do |n|
-	 					puts "	# waiting for invalidation to complete (attempt #{n})"
+	 					puts "	# waiting #{w.delay} sec for invalidation to complete (attempt #{n}/#{w.max_attempts})"
 	 				end
 				end
 
