@@ -32,9 +32,9 @@ module CloudDeploy
 				raise "cf_distro_id needs to be provided in constructor"
 			end
 
-			cf = Aws::CloudFront.new
+			cf = Aws::CloudFront::Client.new
 
-			resp = cf.client.create_invalidation({
+			resp = cf.create_invalidation({
 					:distribution_id => @cf_distro_id,
 					:invalidation_batch => {
 						:paths => {
@@ -46,7 +46,7 @@ module CloudDeploy
 				})
 
 			if (wait)
-				cf.client.wait_until(:invalidation_completed, {
+				cf.wait_until(:invalidation_completed, {
 					:distribution_id => @cf_distro_id,
 					:id => resp.invalidation.id
 					}) do |w|
