@@ -18,9 +18,15 @@ module CloudDeploy
 			if (options[:secret_access_key] == nil || options[:secret_access_key] == '')
 				raise "secret_access_key cannot be empty or nil"
 			end
+
+			region = options[:region]
+			if (options[:region] == nil)
+				region = 'us-east-1'
+			end
+			
 			Aws.config.update({
 				credentials: Aws::Credentials.new(options[:access_key_id], options[:secret_access_key]),
-				region: options[:region]
+				region: region
 				})
 
 			@cf_distro_id = options[:cf_distro_id]
