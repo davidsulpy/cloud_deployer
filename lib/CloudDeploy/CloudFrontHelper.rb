@@ -27,14 +27,14 @@ module CloudDeploy
 			@code_version = options[:code_version]
 		end
  
-		def invalidate(path)
+		def invalidate(path, wait=false)
 			if (@cf_distro_id == nil || @cf_distro_id == '')
 				raise "cf_distro_id needs to be provided in constructor"
 			end
 
 			cf = Aws::CloudFront.new
 
-			cf.client.create_invalidation({
+			resp = cf.client.create_invalidation({
 					:distribution_id => @cf_distro_id,
 					:invalidation_batch => {
 						:paths => {
@@ -44,6 +44,19 @@ module CloudDeploy
 						:caller_reference => @code_version
 					}
 				})
+
+			if (wait)
+				cf.client.wait_until(:invalidation_completed, {
+					:distribution_id => @cf_distro_id,
+					:id => resp.invalidation.id
+					}) do |w|
+
+					w.before_attempt do |n|
+	 					puts "	# waiting for invalidation to complete (attempt #{n})"
+	 				end
+				end
+
+			end
 
 		end
 	end
