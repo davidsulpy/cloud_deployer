@@ -40,18 +40,31 @@ module CloudDeploy
 		end
 
 		def create_static_web_s3_bucket(bucket_name, website_configuration)
-			puts "Creating s3 bucket #{bucket_name}"
+			puts "Creating s3 bucket #{bucket_name} in region #{Aws.config[:region]}"
 
 			s3client = Aws::S3::Client.new
 
+			bucket_exists = false
 			begin
-				resp = s3client.create_bucket({
-					acl: "public-read",
+				resp = s3client.head_bucket({
 					bucket: bucket_name
 					})
+				puts "bucket exists"
+				bucket_exists = true
 			rescue
-				puts "error creating bucket"
-				raise
+				puts "bucket doesn't exist"
+			end
+
+			if (!bucket_exists)
+				begin
+					resp = s3client.create_bucket({
+						acl: "public-read",
+						bucket: bucket_name
+						})
+				rescue
+					puts "error creating bucket"
+					raise
+				end
 			end
 
 			begin
