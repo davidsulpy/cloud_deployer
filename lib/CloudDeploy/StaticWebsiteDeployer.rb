@@ -81,7 +81,9 @@ module CloudDeploy
 
 		# this method was adapted from a class provided by Avi Tzurel http://avi.io/blog/2013/12/03/upload-folder-to-s3-recursively/
 	    def upload(folder_path, bucket_name, thread_count = 5)
-			s3client = Aws::S3::Client.new
+			s3client = Aws::S3::Resource.new
+
+			b = s3client.bucket(bucket_name).obj('/')
 
 			files = Dir.glob("#{folder_path}/**/*")
 			total_files = files.length
@@ -106,9 +108,9 @@ module CloudDeploy
 
 				puts "[#{Thread.current["file_number"]}/#{total_files}] (#{path}) uploading..."
 
-				data = File.open(file)
+				#data = File.open(file)
 
-				next if File.directory?(data)
+				next if File.directory?(path)
 				key = file[folder_path.length+1..-1]
 				content_length = File.size(file)
 				mime = "text/plain"
@@ -126,13 +128,17 @@ module CloudDeploy
 				end
 
 					begin
-						s3client.put_object({
-								acl: "public-read",
-								bucket: bucket_name,
-								body: data,
-								key: key,
-								content_type: mime
+						b.upload_file(path, {
+							acl: "public-read",
+							content_type: mime
 							})
+						# s3client.put_object({
+						# 		acl: "public-read",
+						# 		bucket: bucket_name,
+						# 		body: data,
+						# 		key: key,
+						# 		content_type: mime
+						# 	})
 					rescue
 						puts "error with key: #{key}"
 						raise
