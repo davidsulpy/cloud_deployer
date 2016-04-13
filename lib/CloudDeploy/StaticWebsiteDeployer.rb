@@ -83,7 +83,7 @@ module CloudDeploy
 	    def upload(folder_path, bucket_name, thread_count = 5)
 			s3client = Aws::S3::Resource.new
 
-			b = s3client.bucket(bucket_name).object('/')
+			b = s3client.bucket(bucket_name)
 
 			files = Dir.glob("#{folder_path}/**/*")
 			total_files = files.length
@@ -108,7 +108,7 @@ module CloudDeploy
 
 				puts "[#{Thread.current["file_number"]}/#{total_files}] (#{path}) uploading..."
 
-				#data = File.open(file)
+				data = File.open(file)
 
 				next if File.directory?(path)
 				key = file[folder_path.length+1..-1]
@@ -128,7 +128,8 @@ module CloudDeploy
 				end
 
 					begin
-						b.upload_file(path, {
+						b.object(path).put({
+							body: data,
 							acl: "public-read",
 							content_type: mime
 							})
