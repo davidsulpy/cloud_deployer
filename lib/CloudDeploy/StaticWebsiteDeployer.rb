@@ -128,7 +128,7 @@ module CloudDeploy
 				end
 
 					begin
-						b.object(path).put({
+						b.object(key).put({
 							body: data,
 							acl: "public-read",
 							content_type: mime
