@@ -125,13 +125,18 @@ module CloudDeploy
 					mime = `file --mime --brief #{file}`.strip
 				end
 
-				s3client.put_object({
-						acl: "public-read",
-						bucket: bucket_name,
-						body: data,
-						key: key,
-						content_type: mime
-					})
+					begin
+						s3client.put_object({
+								acl: "public-read",
+								bucket: bucket_name,
+								body: data,
+								key: key,
+								content_type: mime
+							})
+					rescue
+						puts "error with key: #{key}"
+						raise
+					end
 				end
 			}
 			end
