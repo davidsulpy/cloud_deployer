@@ -83,7 +83,7 @@ module CloudDeploy
 	    def upload(folder_path, bucket_name, thread_count = 5)
 			s3client = Aws::S3::Resource.new
 
-			b = s3client.bucket(bucket_name).obj('/')
+			b = s3client.bucket(bucket_name).object('/')
 
 			files = Dir.glob("#{folder_path}/**/*")
 			total_files = files.length
