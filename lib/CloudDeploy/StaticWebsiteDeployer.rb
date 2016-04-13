@@ -104,7 +104,7 @@ module CloudDeploy
 				#
 				path = file
 
-				puts "[#{Thread.current["file_number"]}/#{total_files}] uploading..."
+				puts "[#{Thread.current["file_number"]}/#{total_files}] (#{path}) uploading..."
 
 				data = File.open(file)
 
