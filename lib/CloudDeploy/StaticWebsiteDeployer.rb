@@ -140,8 +140,7 @@ module CloudDeploy
 						# 		content_type: mime
 						# 	})
 					rescue
-						puts "error with key: #{key}"
-						raise
+						puts "error with key: #{key} mime: #{mime}"
 					end
 				end
 			}
