@@ -132,15 +132,9 @@ module CloudDeploy
 							acl: "public-read",
 							content_type: mime
 							})
-						# s3client.put_object({
-						# 		acl: "public-read",
-						# 		bucket: bucket_name,
-						# 		body: data,
-						# 		key: key,
-						# 		content_type: mime
-						# 	})
 					rescue
 						puts "error with key: #{key} mime: #{mime}"
+						raise
 					end
 				end
 			}
