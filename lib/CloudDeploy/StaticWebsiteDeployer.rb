@@ -40,18 +40,31 @@ module CloudDeploy
 		end
 
 		def create_static_web_s3_bucket(bucket_name, website_configuration)
-			puts "Creating s3 bucket #{bucket_name}"
+			puts "Creating s3 bucket #{bucket_name} in region #{Aws.config[:region]}"
 
 			s3client = Aws::S3::Client.new
 
+			bucket_exists = false
 			begin
-				resp = s3client.create_bucket({
-					acl: "public-read",
+				resp = s3client.head_bucket({
 					bucket: bucket_name
 					})
+				puts "bucket exists"
+				bucket_exists = true
 			rescue
-				puts "error creating bucket"
-				raise
+				puts "bucket doesn't exist"
+			end
+
+			if (!bucket_exists)
+				begin
+					resp = s3client.create_bucket({
+						acl: "public-read",
+						bucket: bucket_name
+						})
+				rescue
+					puts "error creating bucket"
+					raise
+				end
 			end
 
 			begin
@@ -68,7 +81,9 @@ module CloudDeploy
 
 		# this method was adapted from a class provided by Avi Tzurel http://avi.io/blog/2013/12/03/upload-folder-to-s3-recursively/
 	    def upload(folder_path, bucket_name, thread_count = 5)
-			s3client = Aws::S3::Client.new
+			s3client = Aws::S3::Resource.new
+
+			b = s3client.bucket(bucket_name)
 
 			files = Dir.glob("#{folder_path}/**/*")
 			total_files = files.length
@@ -91,11 +106,11 @@ module CloudDeploy
 				#
 				path = file
 
-				puts "[#{Thread.current["file_number"]}/#{total_files}] uploading..."
+				puts "[#{Thread.current["file_number"]}/#{total_files}] (#{path}) uploading..."
 
 				data = File.open(file)
 
-				next if File.directory?(data)
+				next if File.directory?(path)
 				key = file[folder_path.length+1..-1]
 				content_length = File.size(file)
 				mime = "text/plain"
@@ -109,16 +124,19 @@ module CloudDeploy
 				elsif (ext == ".svg")
 					mime = "image/svg+xml"
 				else
-					mime = `file --mime --brief #{file}`.strip
+					mime = `file --mime --brief '#{file}'`.strip
 				end
 
-				s3client.put_object({
-						acl: "public-read",
-						bucket: bucket_name,
-						body: data,
-						key: key,
-						content_type: mime
-					})
+					begin
+						b.object(key).put({
+							body: data,
+							acl: "public-read",
+							content_type: mime
+							})
+					rescue
+						puts "error with key: #{key} mime: #{mime}"
+						raise
+					end
 				end
 			}
 			end
