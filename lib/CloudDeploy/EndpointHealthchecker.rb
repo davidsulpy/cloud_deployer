@@ -5,6 +5,7 @@
 
 
 require 'net/http'
+require 'json'
 
 module CloudDeploy
 	class HttpHealthCheck
@@ -53,6 +54,19 @@ module CloudDeploy
 								break
 							else
 								puts "still looking for version, current: #{res['X-IS-Version']}"
+							end
+						elsif (new_version != nil)
+							json_body = nil
+							begin
+								json_body = JSON.parse(res.body)
+							rescue
+								puts "error parsing json"
+								break
+							end
+
+							if (json_body["version"] != nil && json_body["version"] == new_version)
+								puts "#{new_version} found! Success!"
+								break
 							end
 						else
 							break
