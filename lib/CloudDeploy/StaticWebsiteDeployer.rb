@@ -124,7 +124,7 @@ module CloudDeploy
 				elsif (ext == ".svg")
 					mime = "image/svg+xml"
 				else
-					mime = `file --mime --brief #{file}`.strip
+					mime = `file --mime --brief '#{file}'`.strip
 				end
 
 					begin
