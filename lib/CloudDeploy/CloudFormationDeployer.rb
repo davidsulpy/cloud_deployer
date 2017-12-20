@@ -18,7 +18,7 @@ module CloudDeploy
 			@cfn_vars = options[:cfn_vars]
 			@disable_rollback = options[:disable_rollback] || true
 			@notify_teamcity = options[:notify_teamcity]
- 
+
 			if (options[:access_key_id] == nil || options[:access_key_id] == '')
 				raise "access_key_id cannot be empty or nil"
 			end
@@ -27,7 +27,7 @@ module CloudDeploy
 			end
 			@access_key_id = options[:access_key_id]
 			@secret_access_key = options[:secret_access_key]
- 
+
 			Aws.config.update({
 				credentials: Aws::Credentials.new(@access_key_id, @secret_access_key),
 				region: options[:region]
@@ -37,7 +37,7 @@ module CloudDeploy
 		def validate_template_pub()
 			return validate_template(Aws::CloudFormation::Client.new, File.read(@template_location, :encoding => 'UTF-8'))
 		end
- 
+
 		def validate_template(cloudformation, template_contents)
 			puts " # validating template"
 
@@ -49,10 +49,10 @@ module CloudDeploy
 				puts " # # invalid template #{error}"
 				return
 			end
-			
+
 			puts " # # template valid!"
 		end
- 
+
 		def check_if_exists(stack_name)
 			stack = get_stack(stack_name)
 
@@ -83,7 +83,7 @@ module CloudDeploy
 			app_template = File.read(@template_location, :encoding => 'UTF-8')
 
 			cloudformation = Aws::CloudFormation::Client.new
-			
+
 			existing_stack = get_stack(@stack_name)
 			if (existing_stack == nil)
 				puts "The stack #{@stack_name} doesn't exist, creating"
@@ -113,13 +113,14 @@ module CloudDeploy
 				resp = cloudformation.update_stack({
 					stack_name: @stack_name,
 					template_body: app_template,
-					parameters: template_params
+					parameters: template_params,
+					capabilities: ["CAPABILITY_IAM"]
 					})
 				success = check_stack_status(@stack_name, {
 						:status => :stack_update_complete
 					})
 			end
- 			
+
 			if (!success)
 				raise "Updating the cloudformation stack failed, check logs for details"
 			end
@@ -133,17 +134,17 @@ module CloudDeploy
 			end
 			return @stack_outputs
 		end
- 
+
 		def deploy_cloudformation_template()
 			puts "Getting CloudFormation template at #{@template_location}"
 			app_template = File.read(@template_location, :encoding => 'UTF-8')
-			
+
 			cloudformation = Aws::CloudFormation::Client.new
-			
+
 			puts "deploying #{@stack_name}"
-			
+
 			validate_template(cloudformation, app_template)
- 
+
 			puts " # creating stack"
 
 			template_params = []
@@ -163,9 +164,9 @@ module CloudDeploy
 					disable_rollback: @disable_rollback,
 					capabilities: ['CAPABILITY_IAM']
 				})
-			
+
 			success = check_stack_status(@stack_name)
- 			
+
  			if (!success)
  				raise "Deploying the cloudformation stack failed, check logs for details"
  			end
@@ -179,15 +180,15 @@ module CloudDeploy
 			end
 			return @stack_outputs
 		end
- 
+
 		def delete_stack(stack_name)
 			puts "deleting #{stack_name}"
 			cloudformation = Aws::CloudFormation::Client.new
- 	
+
  			cloudformation.delete_stack({
  				stack_name: stack_name
  				})
-			
+
 			puts "AWS has been informed to delete #{stack_name}."
 
 
@@ -202,7 +203,7 @@ module CloudDeploy
 		def check_stack_status(stack_name, options = { :status => :stack_create_complete})
 			status_title_message = "Monitoring AWS Stack Events for #{stack_name}"
 			cloudformation = Aws::CloudFormation::Client.new
- 			
+
  			status = options[:status]
 
  			begin
